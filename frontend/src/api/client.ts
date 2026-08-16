@@ -86,3 +86,18 @@ export function getPnL(
     `/portfolios/${portfolioId}/pnl?security_id=${securityId}&as_of=${asOf}`
   );
 }
+
+export interface InsightResponse {
+  portfolio_id: string;
+  summary: string;
+}
+
+export function getAttributionInsight(
+  portfolioId: string,
+  start: string,
+  end: string
+): Promise<InsightResponse> {
+  return getJSON<InsightResponse>(
+    `/portfolios/${portfolioId}/attribution/brinson/insight?start=${start}&end=${end}`
+  );
+}

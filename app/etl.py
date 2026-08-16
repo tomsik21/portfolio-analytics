@@ -1,9 +1,9 @@
 """
 ETL pipeline: raw custodian-style CSV feeds -> DuckDB (OLAP store).
 
-Ridgeline names "ETL Pipelines that move data into OLAP systems" as a
-named bonus skill for this team, so this closes that gap directly. It
-also models the single most common real-world failure mode in these
+Moving raw data into an OLAP/columnar store cleanly is a core skill in
+performance analytics platforms, so this module builds that end to end.
+It also models the single most common real-world failure mode in these
 pipelines: silently-bad source data (duplicate rows, negative
 quantities, orphaned trades for unknown securities) flowing straight
 through into an analytics engine and producing a confidently wrong

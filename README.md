@@ -1,128 +1,212 @@
-# portfolio-analytics (learning project)
+# portfolio-analytics
 
-A small, honest simulation of what Ridgeline's *Senior Quality Engineer,
-Performance and Analytics* job is actually testing: a service that
-calculates **Time-Weighted Return (TWR)**, **Brinson-Fachler attribution**,
-and **FIFO P&L**, backed by a columnar/OLAP-style store, with a QE-style
-pytest suite validating it.
+A full-stack investment performance & analytics platform: calculates
+**Time-Weighted Return (TWR)**, **Brinson-Fachler attribution**, and
+**FIFO P&L**, serves them over a REST API backed by a columnar/OLAP-style
+database, renders them in a React dashboard, and includes an AI agent
+that narrates results in plain English. Every layer — calculation engine,
+API, ETL pipeline, and UI — is covered by an automated test suite (pytest
+for backend/logic, Playwright for end-to-end browser tests).
 
-## How this maps to the JD — and to Ridgeline's actual stack
+Built as a hands-on learning project to understand the domain and tools
+behind investment performance analytics: how time-weighted return works,
+why performance attribution needs to reconcile exactly, how FIFO lot
+accounting works, and how to test all of that rigorously at every layer
+of a real application.
 
-This isn't guesswork: Ridgeline's own DevOps blog and several sibling
-job postings on the same Performance & Analytics team confirm the real
-stack. Where this project matches, it's deliberate; where it diverges,
-it's noted.
+## What it does
 
-| JD / Ridgeline signal | Confirmed from | This project |
-|---|---|---|
-| "modern OLAP and Columnar technologies" | JD + sibling postings | DuckDB (`app/db.py`) — vectorized/columnar SQL, same mental model as their likely AWS-native choice (Redshift is the most probable fit given their all-in-AWS serverless stack, though they don't name the product publicly) |
-| **FastAPI + Pydantic** | Ridgeline's own DevOps blog names these exact libraries | `app/main.py`, `app/models.py` — direct match, not an approximation |
-| Python as a core language | Ridgeline DevOps blog ("Languages: Python, golang, TypeScript") | This whole project |
-| **"ETL Pipelines that move data into OLAP systems"** (named bonus) | Sibling SWE postings, same team | `app/etl.py` + `tests/test_etl.py` — CSV ingestion with data-quality rejection, tested against a deliberately dirty fixture file |
-| "TWR, Brinson Attribution, benchmark analysis, P&L" | JD | `app/calculations/twr.py`, `brinson.py`, `pnl.py` |
-| "APIs, databases, and automated testing frameworks" | JD | FastAPI + DuckDB + pytest (`tests/`) |
-| Cloud native on AWS, serverless microservices, Lambda | Ridgeline DevOps blog + architecture posts | Not yet built here — see "Next steps" |
-| Terraform / IaC | Ridgeline DevOps blog | Not yet built here — see "Next steps" |
-| GIPS Composites (named product feature) | ridgeline.ai reporting page | Attribution/TWR math here is GIPS-aligned methodology; a composite rollup isn't built yet |
-| "validate business-critical workflows where accuracy... is essential" | JD | `tests/` is written the way a QE would: golden-path + edge cases + a **reconciliation invariant** test for attribution |
-| Kotlin | Named on the Staff Analytics Engineer posting (same team, more senior) | Not covered — this project is Python-only by design |
+- **Time-Weighted Return (TWR)** — the standard method for measuring
+  investment performance independent of investor cash flows (deposits/
+  withdrawals shouldn't make a manager look better or worse than they
+  actually performed). Includes both the true daily-valued method and
+  the Modified Dietz approximation, since knowing when and why they
+  diverge is itself an important part of this domain.
+- **Brinson-Fachler attribution** — breaks down *why* a portfolio beat
+  or lagged its benchmark, sector by sector, into allocation, selection,
+  and interaction effects.
+- **FIFO P&L** — realized and unrealized profit/loss on a security,
+  using first-in-first-out lot matching.
+- **ETL pipeline** — ingests raw CSV transaction/valuation feeds into
+  the database, rejecting malformed rows (duplicates, bad dates, invalid
+  values) with a clear data-quality report instead of crashing.
+- **AI Insight Agent** — turns the attribution numbers into a short,
+  plain-English summary using the Anthropic API. It only narrates
+  numbers the calculation engine already computed; it never does math
+  itself.
+- **A React dashboard** that displays all of the above with live,
+  editable filters (portfolio, security, date ranges).
+
+## Architecture
+
+```text
+┌─────────────────┐        ┌──────────────────────┐        ┌─────────────────┐
+│  React frontend   │ ─── │  FastAPI backend       │ ─── │  DuckDB (OLAP)     │
+│  (Vite + TS)       │  HTTP │  TWR / Attribution /   │  SQL  │  columnar store      │
+│  localhost:5173    │       │  P&L / ETL / AI agent  │       │  portfolio_analytics │
+└─────────────────┘        └──────────────────────┘        └─────────────────┘
+                                        │
+                                        │ (optional)
+                                        ▼
+                             ┌──────────────────────┐
+                             │  Anthropic API         │
+                             │  (AI Insight Agent)    │
+                             └──────────────────────┘
+```
+
+Two independent test suites cover this: **pytest** exercises the
+calculation engine, database queries, ETL, and API directly (no browser
+involved); **Playwright** drives a real Chromium browser against the
+actual running frontend + backend together, the way a real user would.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite |
+| Backend | Python, FastAPI, Pydantic |
+| Database | DuckDB (columnar/OLAP) |
+| AI | Anthropic API (Claude) |
+| Testing (unit/API) | pytest, FastAPI TestClient |
+| Testing (E2E) | Playwright |
+| AI-assisted development | Repo includes a `CLAUDE.md` for use with Claude Code / Cursor |
+
+## Quick start
+
+You'll want **three terminal tabs** open at once: backend, frontend, and
+one free for running commands (tests, git, etc).
+
+### 1. Backend
+
+```bash
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+python -m app.seed_data         # creates portfolio_analytics.duckdb with sample data
+uvicorn app.main:app --reload   # starts the API on http://localhost:8000
+```
+
+Visit `http://localhost:8000/docs` for interactive API documentation
+(Swagger UI) — you can try every endpoint directly from the browser.
+
+### 2. Frontend
+
+In a second terminal, from the project root:
+
+```bash
+cd frontend
+npm install
+npm run dev                     # starts the dashboard on http://localhost:5173
+```
+
+Open `http://localhost:5173`. With both servers running, you should see
+live TWR, attribution, and P&L numbers for the seeded sample portfolio.
+
+### 3. AI Insight Agent (optional)
+
+The dashboard's "Generate insight" button works without any setup — it
+will show a clear error explaining that an API key is needed. To make it
+actually generate a summary:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...    # set in the backend terminal
+# then restart uvicorn
+```
+
+## Running the tests
+
+**Backend / calculation engine (pytest):**
+```bash
+pytest tests/ -v
+```
+Covers: TWR and Modified Dietz edge cases, the Brinson attribution
+reconciliation invariant, FIFO lot-matching correctness, ETL data-quality
+rejection against deliberately dirty sample CSVs, and API-level contract
+tests (correct HTTP status codes for good vs. bad input).
+
+**End-to-end (Playwright):** requires both servers above to be running.
+```bash
+cd frontend
+npx playwright install chromium   # one-time browser download
+npm run test:e2e                  # headless run
+npm run test:e2e:ui               # interactive mode, useful for debugging
+```
+Drives a real browser against the real dashboard: page loads, live data
+recalculation when filters change, the attribution reconciliation
+invariant re-verified from rendered page text (not just the API
+response), and error states for missing/invalid data.
+
+## Project structure
+
+```text
+app/
+  calculations/
+    twr.py        # True TWR (daily-valued) + Modified Dietz
+    brinson.py     # Brinson-Fachler sector attribution
+    pnl.py           # FIFO realized/unrealized P&L
+  db.py            # DuckDB schema + query layer
+  etl.py            # CSV -> OLAP store, with data-quality rejection reporting
+  seed_data.py      # Populates the database with a small, hand-checkable dataset
+  agent.py          # AI Insight Agent (Anthropic API integration)
+  models.py         # Pydantic response schemas
+  main.py           # FastAPI app and route definitions
+data/
+  sample_feeds/     # Deliberately dirty CSVs for exercising the ETL guardrails
+tests/
+  test_twr.py        # unit tests: TWR / Modified Dietz calc engine
+  test_brinson.py     # unit tests: attribution calc engine
+  test_pnl.py          # unit tests: FIFO P&L calc engine
+  test_etl.py           # data-quality tests against dirty sample feeds
+  test_agent.py          # AI agent prompt formatting + missing-API-key guardrail
+  test_api.py             # integration tests against the real DB-backed API
+  conftest.py              # seeds a temp DuckDB file per pytest session
+frontend/
+  src/
+    api/client.ts          # typed API client
+    components/             # TwrCard, AttributionCard, PnlCard, AgentInsightPanel
+    App.tsx                  # dashboard shell + filter controls
+  tests/                      # Playwright end-to-end specs
+  playwright.config.ts
+requirements.txt    # backend Python dependencies
+CLAUDE.md            # repo context for AI pair-programming tools (Claude Code, Cursor)
+```
+
+## AI Insight Agent — design note
+
+The agent (`app/agent.py`) is deliberately scoped narrowly: it *narrates*
+numbers `app/calculations/brinson.py` already computed and verified — it
+never performs any calculation itself. The deterministic, fully-tested
+math lives entirely in the calculation engine; the LLM's only job is
+turning already-correct numbers into plain English. This boundary is
+what keeps the numbers trustworthy and testable even though an LLM call
+is inherently non-deterministic — and it's why `tests/test_agent.py`
+only tests the deterministic parts (prompt formatting, the missing-API-
+key error path) rather than asserting on actual LLM output.
 
 ## Why the domain math is the point
 
-Anyone can wire up a CRUD API. What a QE at a firm like this actually
-needs to understand is *why* two numbers that "should" match sometimes
-don't — e.g. `true_twr()` vs `modified_dietz()` will diverge whenever a
-cash flow is large and well-timed relative to a market move. That's not
-a bug; it's the nature of the approximation. Confusing the two (or not
-knowing they should sometimes differ) is exactly the kind of gap this
-role exists to catch before a client sees a wrong number.
+The calculation engine is the part that actually matters here, not the
+API wrapper around it. `true_twr()` and `modified_dietz()` will
+legitimately disagree whenever a cash flow is large and well-timed
+relative to a market move — that's not a bug, it's the nature of the
+approximation, and confusing the two is exactly the kind of subtle gap
+that matters in performance analytics. Similarly, the Brinson attribution
+engine's real safety net isn't any individual sector's number — it's the
+**reconciliation invariant** (`allocation + selection + interaction`
+must always sum exactly to the active return), verified at three
+separate layers of this project: the pytest unit test, the API response,
+and the rendered UI text via Playwright.
 
-Similarly, the Brinson attribution engine's real safety net isn't any
-individual sector's number — it's the **reconciliation invariant**:
-`allocation + selection + interaction` must sum to the total active
-return, always. That single assertion (`test_reconciliation_invariant_holds`)
-would catch the vast majority of real-world attribution bugs.
-
-## Project layout
-
-```
-app/
-  calculations/
-    twr.py       # True TWR (daily-valued) + Modified Dietz
-    brinson.py   # Brinson-Fachler sector attribution
-    pnl.py       # FIFO realized/unrealized P&L
-  db.py          # DuckDB schema + query layer
-  etl.py         # CSV -> OLAP store, with data-quality rejection reporting
-  seed_data.py   # Small, hand-checkable dataset
-  models.py      # Pydantic response schemas
-  main.py        # FastAPI app
-data/
-  sample_feeds/  # Deliberately dirty CSVs for exercising the ETL guardrails
-tests/
-  test_twr.py        # unit tests, calc engine
-  test_brinson.py    # unit tests, calc engine
-  test_pnl.py         # unit tests, calc engine
-  test_etl.py          # data-quality tests against dirty sample feeds
-  test_api.py           # integration tests against the real DB-backed API
-  conftest.py            # seeds a temp DuckDB file per test session
-CLAUDE.md            # repo context for Claude Code / Cursor — Ridgeline's team uses these daily
-```
-
-## Running it
-
-This was built and had its logic verified in a sandboxed environment with
-**no network access**, so `duckdb`/`fastapi`/`pytest` couldn't actually be
-`pip install`ed here. The calculation engine (the domain-critical part)
-was verified with hand-checked reference values directly, and the DB/API
-query logic was simulated with `sqlite3` standing in for DuckDB to catch
-schema/query bugs. Both passed. Run it for real locally:
-
-```bash
-pip install -r requirements.txt
-
-# seed the database
-python -m app.seed_data
-
-# run the test suite
-pytest tests/ -v
-
-# run the API
-uvicorn app.main:app --reload
-# then: http://localhost:8000/docs for interactive Swagger UI
-```
-
-Try it:
-```bash
-curl "http://localhost:8000/portfolios/PORT1/performance/twr?start=2026-01-01&end=2026-01-03"
-curl "http://localhost:8000/portfolios/PORT1/attribution/brinson?start=2026-01-01&end=2026-01-31"
-curl "http://localhost:8000/portfolios/PORT1/pnl?security_id=AAPL_DEMO&as_of=2026-01-31"
-```
-
-## What to build next (in rough order of relevance to the JD)
+## What's next
 
 1. **Property-based tests** (`hypothesis`) for the Brinson reconciliation
-   invariant — generate random weight/return combinations and assert the
-   invariant holds for *all* of them, not just your hand-picked cases.
-2. **Contract/schema tests** — use `pydantic` models to validate API
-   responses against a fixed schema so a field-rename becomes an
-   immediately-caught test failure, not a silent client break.
-3. **Dockerize it and deploy behind AWS Lambda + API Gateway** — Ridgeline's
-   own DevOps blog confirms their services deploy as Lambda functions
-   behind serverless infra managed with Terraform/CDK. Getting this
-   FastAPI app running on Lambda (via Mangum) is the single highest-value
-   next step to mirror their actual deployment model, and directly
-   addresses "experience validating applications built on cloud native
-   platforms."
-4. **Terraform for the DB + API infra** — even a minimal `main.tf`
-   provisioning the equivalent of what you're running locally shows
-   IaC familiarity, which their DevOps blog treats as core to the role.
-5. **A GIPS composite rollup** on top of `twr.py` — aggregate several
-   portfolios into a composite return, since GIPS Composites are a
-   named feature on Ridgeline's own reporting product page.
-6. **Use Claude Code or Cursor** to extend this — the repo now has a
-   `CLAUDE.md` primed for exactly that. Try asking it to add
-   multi-currency attribution and write the QE test suite alongside it —
-   the JD explicitly wants people comfortable pairing with these tools.
-7. **Deliberately break something** (e.g. flip FIFO to LIFO silently) and
-   confirm your test suite catches it. That exercise — "would my tests
-   have caught this?" — is the actual day-to-day instinct this role wants.
+   invariant, generating random weight/return combinations rather than
+   relying on hand-picked cases.
+2. **Dockerize and deploy** behind a serverless API (e.g. AWS Lambda +
+   API Gateway).
+3. **Terraform** for the infrastructure, even minimally.
+4. **A GIPS composite rollup** aggregating multiple portfolios.
+5. **Multi-currency attribution**, extending the calc engine and its test
+   suite together (a good task to hand to Claude Code, using `CLAUDE.md`
+   as context).

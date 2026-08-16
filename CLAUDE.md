@@ -1,10 +1,9 @@
 # CLAUDE.md
 
 Context for Claude Code (or Cursor) when working in this repo. This
-file exists because Ridgeline's Performance & Analytics team explicitly
-builds with Claude Code / Cursor day-to-day — keeping a repo well
-primed for an AI pair-programmer is itself a relevant skill for this
-role, not just a nice-to-have.
+file exists because building with Claude Code / Cursor day-to-day is a
+directly relevant skill in this domain — keeping a repo well primed for
+an AI pair-programmer matters, not just for this task but as a habit.
 
 ## What this is
 
@@ -56,7 +55,7 @@ uvicorn app.main:app --reload
 
 Good next tasks to hand to Claude Code directly (each should come with
 its own pytest file, not just implementation):
-- Multi-currency attribution (Ridgeline's actual accounting engine is
+- Multi-currency attribution (a real accounting engine would be
   multi-currency, multi-asset, double-entry — this repo's isn't yet)
 - A GIPS composite rollup on top of `brinson.py` / `twr.py`
 - Property-based tests (`hypothesis`) for the reconciliation invariant
