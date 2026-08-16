@@ -29,13 +29,16 @@ export default function TwrCard({ portfolioId, start, end }: Props) {
       {data && (
         <div className="metric-row">
           <div className="metric">
-            <div className={`value ${data.twr >= 0 ? "positive" : "negative"}`}>
+            <div
+              className={`value ${data.twr >= 0 ? "positive" : "negative"}`}
+              data-testid="twr-value"
+            >
               {(data.twr * 100).toFixed(2)}%
             </div>
             <div className="label">TWR ({data.period_start} → {data.period_end})</div>
           </div>
           <div className="metric">
-            <div className="value">{data.num_subperiods}</div>
+            <div className="value" data-testid="twr-subperiods">{data.num_subperiods}</div>
             <div className="label">Sub-periods linked</div>
           </div>
         </div>

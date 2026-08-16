@@ -3,6 +3,7 @@ import { getHealth } from "./api/client";
 import TwrCard from "./components/TwrCard";
 import AttributionCard from "./components/AttributionCard";
 import PnlCard from "./components/PnlCard";
+import AgentInsightPanel from "./components/AgentInsightPanel";
 
 // Seed data (app/seed_data.py) only covers this one portfolio/security —
 // hardcoding these as sensible defaults rather than building a full
@@ -49,12 +50,20 @@ export default function App() {
           <label>
             Portfolio ID
             <br />
-            <input value={portfolioId} onChange={(e) => setPortfolioId(e.target.value)} />
+            <input
+              value={portfolioId}
+              onChange={(e) => setPortfolioId(e.target.value)}
+              data-testid="input-portfolio-id"
+            />
           </label>
           <label>
             Security ID (for P&amp;L)
             <br />
-            <input value={securityId} onChange={(e) => setSecurityId(e.target.value)} />
+            <input
+              value={securityId}
+              onChange={(e) => setSecurityId(e.target.value)}
+              data-testid="input-security-id"
+            />
           </label>
         </div>
       </div>
@@ -67,12 +76,22 @@ export default function App() {
               <label>
                 Start
                 <br />
-                <input type="date" value={twrStart} onChange={(e) => setTwrStart(e.target.value)} />
+                <input
+                  type="date"
+                  value={twrStart}
+                  onChange={(e) => setTwrStart(e.target.value)}
+                  data-testid="input-twr-start"
+                />
               </label>
               <label>
                 End
                 <br />
-                <input type="date" value={twrEnd} onChange={(e) => setTwrEnd(e.target.value)} />
+                <input
+                  type="date"
+                  value={twrEnd}
+                  onChange={(e) => setTwrEnd(e.target.value)}
+                  data-testid="input-twr-end"
+                />
               </label>
             </div>
           </div>
@@ -94,6 +113,7 @@ export default function App() {
             </div>
           </div>
           <AttributionCard portfolioId={portfolioId} start={attrStart} end={attrEnd} />
+          <AgentInsightPanel portfolioId={portfolioId} start={attrStart} end={attrEnd} />
 
           <div className="card">
             <h2>P&amp;L as-of date</h2>

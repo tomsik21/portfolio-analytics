@@ -37,19 +37,25 @@ export default function PnlCard({ portfolioId, securityId, asOf }: Props) {
       {data && (
         <div className="metric-row">
           <div className="metric">
-            <div className={`value ${data.realized_pnl >= 0 ? "positive" : "negative"}`}>
+            <div
+              className={`value ${data.realized_pnl >= 0 ? "positive" : "negative"}`}
+              data-testid="pnl-realized"
+            >
               {usd(data.realized_pnl)}
             </div>
             <div className="label">Realized P&amp;L</div>
           </div>
           <div className="metric">
-            <div className={`value ${data.unrealized_pnl >= 0 ? "positive" : "negative"}`}>
+            <div
+              className={`value ${data.unrealized_pnl >= 0 ? "positive" : "negative"}`}
+              data-testid="pnl-unrealized"
+            >
               {usd(data.unrealized_pnl)}
             </div>
             <div className="label">Unrealized P&amp;L</div>
           </div>
           <div className="metric">
-            <div className="value">{data.open_quantity}</div>
+            <div className="value" data-testid="pnl-open-quantity">{data.open_quantity}</div>
             <div className="label">Open quantity</div>
           </div>
           <div className="metric">
