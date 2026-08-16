@@ -1,0 +1,31 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# DuckDB local database (regenerated via `python -m app.seed_data`)
+*.duckdb
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/playwright/.cache/
+
+# Env / secrets
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/

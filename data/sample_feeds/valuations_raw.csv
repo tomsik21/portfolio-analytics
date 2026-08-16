@@ -1,0 +1,6 @@
+portfolio_id,valuation_date,market_value,cash_flow
+PORT2,2026-02-01,50000,0
+PORT2,2026-02-02,52000,0
+PORT2,2026-02-03,-100,0
+PORT2,bad-date,53000,0
+PORT2,2026-02-04,54000,0

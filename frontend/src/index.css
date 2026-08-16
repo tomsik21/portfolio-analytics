@@ -1,0 +1,152 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #f5f6f8;
+  color: #1a1a2e;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.app-header {
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  font-size: 22px;
+  margin: 0 0 4px 0;
+}
+
+.app-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+  margin: 0 0 16px 0;
+}
+
+.metric-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.metric {
+  min-width: 120px;
+}
+
+.metric .value {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.metric .value.positive {
+  color: #0a7d3e;
+}
+
+.metric .value.negative {
+  color: #c22b2b;
+}
+
+.metric .label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.status-banner {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.status-banner.error {
+  background: #fdecea;
+  color: #a11616;
+}
+
+.status-banner.loading {
+  background: #eef1ff;
+  color: #333;
+}
+
+.agent-panel textarea {
+  width: 100%;
+  min-height: 60px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.agent-panel button {
+  margin-top: 10px;
+  background: #2b3a67;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.agent-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.agent-response {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f8f9fc;
+  border-left: 3px solid #2b3a67;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
