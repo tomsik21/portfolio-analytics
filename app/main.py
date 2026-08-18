@@ -1,7 +1,7 @@
 """
 FastAPI service exposing the performance & analytics platform.
 
-Endpoints map directly to the JD's domain: TWR, Brinson attribution,
+Endpoints map directly to the core domain: TWR, Brinson attribution,
 and P&L. This is the surface a QE would actually write API-level tests
 against (contract tests, edge-case tests, data-integrity tests).
 """
@@ -12,7 +12,6 @@ from datetime import date
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.agent import summarize_attribution
 from app.calculations.brinson import SectorData, brinson_fachler
 from app.calculations.pnl import Transaction, TransactionType, compute_fifo_pnl
 from app.calculations.twr import DailyValuation, true_twr
@@ -129,45 +128,6 @@ def get_attribution(portfolio_id: str, start: date, end: date):
             for s in result.sector_results
         ],
     )
-
-
-@app.get(
-    "/portfolios/{portfolio_id}/attribution/brinson/insight"
-)
-def get_attribution_insight(portfolio_id: str, start: date, end: date):
-    """
-    Same underlying computation as /attribution/brinson, but returns an
-    AI-generated plain-English narration instead of raw numbers. Recomputes
-    rather than caching the prior result — this is intentionally a thin
-    wrapper so the deterministic calc engine stays the single source of
-    truth for the numbers themselves.
-    """
-    con = _get_con()
-    rows = fetch_sector_returns(con, portfolio_id, start, end)
-    con.close()
-
-    if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No sector attribution data for {portfolio_id} in {start}..{end}.",
-        )
-
-    sectors = [
-        SectorData(sector=r[0], portfolio_weight=r[1], benchmark_weight=r[2],
-                   portfolio_return=r[3], benchmark_return=r[4])
-        for r in rows
-    ]
-    try:
-        result = brinson_fachler(sectors)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    try:
-        summary = summarize_attribution(result)
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
-    return {"portfolio_id": portfolio_id, "summary": summary}
 
 
 @app.get("/portfolios/{portfolio_id}/pnl", response_model=PnLResponse)

@@ -3,10 +3,10 @@
 A full-stack investment performance & analytics platform: calculates
 **Time-Weighted Return (TWR)**, **Brinson-Fachler attribution**, and
 **FIFO P&L**, serves them over a REST API backed by a columnar/OLAP-style
-database, renders them in a React dashboard, and includes an AI agent
-that narrates results in plain English. Every layer — calculation engine,
-API, ETL pipeline, and UI — is covered by an automated test suite (pytest
-for backend/logic, Playwright for end-to-end browser tests).
+database, and renders them in a React dashboard. Every layer —
+calculation engine, API, ETL pipeline, and UI — is covered by an
+automated test suite (pytest for backend/logic, Playwright for
+end-to-end browser tests).
 
 Built as a hands-on learning project to understand the domain and tools
 behind investment performance analytics: how time-weighted return works,
@@ -30,10 +30,6 @@ of a real application.
 - **ETL pipeline** — ingests raw CSV transaction/valuation feeds into
   the database, rejecting malformed rows (duplicates, bad dates, invalid
   values) with a clear data-quality report instead of crashing.
-- **AI Insight Agent** — turns the attribution numbers into a short,
-  plain-English summary using the Anthropic API. It only narrates
-  numbers the calculation engine already computed; it never does math
-  itself.
 - **A React dashboard** that displays all of the above with live,
   editable filters (portfolio, security, date ranges).
 
@@ -43,15 +39,8 @@ of a real application.
 ┌─────────────────┐        ┌──────────────────────┐        ┌─────────────────┐
 │  React frontend   │ ─── │  FastAPI backend       │ ─── │  DuckDB (OLAP)     │
 │  (Vite + TS)       │  HTTP │  TWR / Attribution /   │  SQL  │  columnar store      │
-│  localhost:5173    │       │  P&L / ETL / AI agent  │       │  portfolio_analytics │
+│  localhost:5173    │       │  P&L / ETL              │       │  portfolio_analytics │
 └─────────────────┘        └──────────────────────┘        └─────────────────┘
-                                        │
-                                        │ (optional)
-                                        ▼
-                             ┌──────────────────────┐
-                             │  Anthropic API         │
-                             │  (AI Insight Agent)    │
-                             └──────────────────────┘
 ```
 
 Two independent test suites cover this: **pytest** exercises the
@@ -66,7 +55,6 @@ actual running frontend + backend together, the way a real user would.
 | Frontend | React 18, TypeScript, Vite |
 | Backend | Python, FastAPI, Pydantic |
 | Database | DuckDB (columnar/OLAP) |
-| AI | Anthropic API (Claude) |
 | Testing (unit/API) | pytest, FastAPI TestClient |
 | Testing (E2E) | Playwright |
 | AI-assisted development | Repo includes a `CLAUDE.md` for use with Claude Code / Cursor |
@@ -103,17 +91,6 @@ npm run dev                     # starts the dashboard on http://localhost:5173
 Open `http://localhost:5173`. With both servers running, you should see
 live TWR, attribution, and P&L numbers for the seeded sample portfolio.
 
-### 3. AI Insight Agent (optional)
-
-The dashboard's "Generate insight" button works without any setup — it
-will show a clear error explaining that an API key is needed. To make it
-actually generate a summary:
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...    # set in the backend terminal
-# then restart uvicorn
-```
-
 ## Running the tests
 
 **Backend / calculation engine (pytest):**
@@ -148,7 +125,6 @@ app/
   db.py            # DuckDB schema + query layer
   etl.py            # CSV -> OLAP store, with data-quality rejection reporting
   seed_data.py      # Populates the database with a small, hand-checkable dataset
-  agent.py          # AI Insight Agent (Anthropic API integration)
   models.py         # Pydantic response schemas
   main.py           # FastAPI app and route definitions
 data/
@@ -158,31 +134,18 @@ tests/
   test_brinson.py     # unit tests: attribution calc engine
   test_pnl.py          # unit tests: FIFO P&L calc engine
   test_etl.py           # data-quality tests against dirty sample feeds
-  test_agent.py          # AI agent prompt formatting + missing-API-key guardrail
-  test_api.py             # integration tests against the real DB-backed API
-  conftest.py              # seeds a temp DuckDB file per pytest session
+  test_api.py            # integration tests against the real DB-backed API
+  conftest.py             # seeds a temp DuckDB file per pytest session
 frontend/
   src/
     api/client.ts          # typed API client
-    components/             # TwrCard, AttributionCard, PnlCard, AgentInsightPanel
+    components/             # TwrCard, AttributionCard, PnlCard
     App.tsx                  # dashboard shell + filter controls
   tests/                      # Playwright end-to-end specs
   playwright.config.ts
 requirements.txt    # backend Python dependencies
 CLAUDE.md            # repo context for AI pair-programming tools (Claude Code, Cursor)
 ```
-
-## AI Insight Agent — design note
-
-The agent (`app/agent.py`) is deliberately scoped narrowly: it *narrates*
-numbers `app/calculations/brinson.py` already computed and verified — it
-never performs any calculation itself. The deterministic, fully-tested
-math lives entirely in the calculation engine; the LLM's only job is
-turning already-correct numbers into plain English. This boundary is
-what keeps the numbers trustworthy and testable even though an LLM call
-is inherently non-deterministic — and it's why `tests/test_agent.py`
-only tests the deterministic parts (prompt formatting, the missing-API-
-key error path) rather than asserting on actual LLM output.
 
 ## Why the domain math is the point
 
