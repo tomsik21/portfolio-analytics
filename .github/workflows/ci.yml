@@ -69,7 +69,7 @@ jobs:
       - name: Start servers and wait for them to be ready
         run: |
           nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-          (cd frontend && nohup npm run dev > ../frontend.log 2>&1 &)
+          (cd frontend && nohup npm run dev -- --host 0.0.0.0 > ../frontend.log 2>&1 &)
           npx wait-on http-get://127.0.0.1:8000/health http://127.0.0.1:5173 --timeout 30000
 
       - name: Run Playwright tests
