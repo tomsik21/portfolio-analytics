@@ -12,6 +12,7 @@ from datetime import date
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import db
 from app.calculations.brinson import SectorData, brinson_fachler
 from app.calculations.pnl import Transaction, TransactionType, compute_fifo_pnl
 from app.calculations.twr import DailyValuation, true_twr
@@ -20,7 +21,6 @@ from app.db import (
     fetch_daily_valuations,
     fetch_sector_returns,
     fetch_transactions,
-    get_connection,
 )
 from app.models import (
     AttributionResponse,
@@ -47,7 +47,13 @@ app.add_middleware(
 
 
 def _get_con():
-    return get_connection()
+    # Calls db.get_connection() via the module reference, not a
+    # directly-imported name — this matters for testability. Tests patch
+    # app.db.get_connection to point at an isolated temp database; that
+    # patch is only visible here because we look it up on the module at
+    # call time rather than binding our own copy of the function at
+    # import time (which would silently keep pointing at the original).
+    return db.get_connection()
 
 
 @app.get("/health")
