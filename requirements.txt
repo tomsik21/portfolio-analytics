@@ -4,4 +4,3 @@ duckdb>=0.10
 pydantic>=2.6
 pytest>=8.0
 httpx>=0.27
-anthropic>=0.40

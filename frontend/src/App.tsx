@@ -3,7 +3,6 @@ import { getHealth } from "./api/client";
 import TwrCard from "./components/TwrCard";
 import AttributionCard from "./components/AttributionCard";
 import PnlCard from "./components/PnlCard";
-import AgentInsightPanel from "./components/AgentInsightPanel";
 
 // Seed data (app/seed_data.py) only covers this one portfolio/security —
 // hardcoding these as sensible defaults rather than building a full
@@ -113,7 +112,6 @@ export default function App() {
             </div>
           </div>
           <AttributionCard portfolioId={portfolioId} start={attrStart} end={attrEnd} />
-          <AgentInsightPanel portfolioId={portfolioId} start={attrStart} end={attrEnd} />
 
           <div className="card">
             <h2>P&amp;L as-of date</h2>
