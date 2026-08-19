@@ -60,29 +60,16 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      # Both servers are started AND waited-on in this single step,
-      # deliberately. GitHub Actions tears down each step's shell (and
-      # anything backgrounded within it, even with nohup) once that step
-      # finishes — so starting servers in one step and waiting for them in
-      # a later step kills them before the wait ever runs. Keeping start
-      # + wait in one continuous shell session avoids that.
-      - name: Start servers and wait for them to be ready
-        run: |
-          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-          (cd frontend && nohup npm run dev -- --host 0.0.0.0 > ../frontend.log 2>&1 &)
-          npx wait-on http-get://127.0.0.1:8000/health http://127.0.0.1:5173 --timeout 30000
-
-      - name: Run Playwright tests
+      # No manual server startup or wait-on step needed here — the
+      # webServer config in playwright.config.ts starts both the
+      # backend and frontend automatically before tests run, waits
+      # until each responds, and tears them down after. This one
+      # command is the full end-to-end run.
+      - name: Run Playwright tests (auto-starts backend + frontend)
         working-directory: frontend
         run: npm run test:e2e
-
-      - name: Show server logs on failure
-        if: failure()
-        run: |
-          echo "--- backend.log ---"
-          cat backend.log || true
-          echo "--- frontend.log ---"
-          cat frontend.log || true
+        env:
+          CI: true
 
       - name: Upload Playwright report on failure
         if: failure()

@@ -102,13 +102,20 @@ reconciliation invariant, FIFO lot-matching correctness, ETL data-quality
 rejection against deliberately dirty sample CSVs, and API-level contract
 tests (correct HTTP status codes for good vs. bad input).
 
-**End-to-end (Playwright):** requires both servers above to be running.
+**End-to-end (Playwright):** starts the backend and frontend
+automatically — no need to have them running first.
 ```bash
 cd frontend
 npx playwright install chromium   # one-time browser download
 npm run test:e2e                  # headless run
 npm run test:e2e:ui               # interactive mode, useful for debugging
 ```
+The backend command in `playwright.config.ts` assumes `uvicorn` is on
+your `PATH`, so run this from a terminal with your Python virtual
+environment activated. If you already have both servers running
+manually (e.g. mid-development), Playwright reuses them instead of
+starting duplicates — see the `webServer` config for details.
+
 Drives a real browser against the real dashboard: page loads, live data
 recalculation when filters change, the attribution reconciliation
 invariant re-verified from rendered page text (not just the API
