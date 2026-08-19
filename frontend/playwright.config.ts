@@ -1,4 +1,16 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices, ReporterDescription } from "@playwright/test";
+import { currentsReporter } from "@currents/playwright";
+
+// The Currents reporter (v2) fails hard at startup if CURRENTS_RECORD_KEY
+// isn't set — it doesn't just skip recording the way v1 used to. Since
+// the key is only meant to be set in CI (via GitHub secrets), building
+// the reporter list conditionally lets local runs work fine without it
+// (falls back to just the local HTML report), while CI — which always
+// has the key — still uploads to the Currents.dev dashboard.
+const reporters: ReporterDescription[] = [["html"]];
+if (process.env.CURRENTS_RECORD_KEY) {
+  reporters.push(currentsReporter());
+}
 
 // webServer starts BOTH the backend and frontend automatically before
 // tests run, and tears them down after — so `npm run test:e2e` is fully
@@ -16,13 +28,17 @@ import { defineConfig, devices } from "@playwright/test";
 // requirements.txt was installed into).
 export default defineConfig({
   testDir: "./tests",
-  fullyParallel: true,
+  // Currents.dev does not currently support parallelizing multiple
+  // tests within the same spec file — only across files. Turning this
+  // off keeps Currents recording reliable; Playwright still runs
+  // different spec files in parallel across workers, so this is a
+  // small, not a large, slowdown.
+  fullyParallel: false,
   retries: 0,
-  // "html" keeps the local report working exactly as before; adding the
-  // Currents reporter alongside it uploads the same run's results to
-  // your Currents.dev dashboard. Neither reporter replaces the other —
-  // this is additive, not a swap.
-  reporter: [["html"], ["@currents/playwright"]],
+  // "html" always runs so local reports keep working. The Currents
+  // reporter is appended above only when CURRENTS_RECORD_KEY is set —
+  // see the comment near the top of this file for why.
+  reporter: reporters,
   use: {
     baseURL: "http://localhost:5173",
     // Currents' dashboard is only genuinely useful once there's

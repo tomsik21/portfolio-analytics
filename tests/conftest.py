@@ -26,8 +26,8 @@ def seeded_db(tmp_path_factory):
 
     original_get_connection = db_module.get_connection
 
-    def _patched_get_connection(path: str = db_path):
-        return original_get_connection(path)
+    def _patched_get_connection(path: str = db_path, read_only: bool = False):
+        return original_get_connection(path, read_only=read_only)
 
     db_module.get_connection = _patched_get_connection
     yield db_path
