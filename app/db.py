@@ -62,7 +62,29 @@ CREATE TABLE IF NOT EXISTS current_prices (
 """
 
 
-def get_connection(db_path: str = "portfolio_analytics.duckdb") -> duckdb.DuckDBPyConnection:
+def get_connection(
+    db_path: str = "portfolio_analytics.duckdb", read_only: bool = False
+) -> duckdb.DuckDBPyConnection:
+    """
+    Open a connection to the DuckDB store.
+
+    read_only=True is important under concurrent traffic: DuckDB only
+    allows ONE read-write connection to a given database file at a time
+    — a second concurrent read-write connect() while another is still
+    open raises "Unique file handle conflict". Multiple simultaneous
+    read-only connections, by contrast, are explicitly supported. Every
+    API endpoint in this app only ever queries (never writes), so those
+    call sites pass read_only=True; only the ETL/seed paths — which
+    actually write and need schema creation — use the default
+    read-write mode.
+
+    Schema creation (SCHEMA_SQL) requires write access, so it's skipped
+    entirely in read-only mode; callers relying on read_only=True must
+    ensure the schema/tables already exist (true for any endpoint hit
+    after seeding has run).
+    """
+    if read_only:
+        return duckdb.connect(db_path, read_only=True)
     con = duckdb.connect(db_path)
     con.execute(SCHEMA_SQL)
     return con

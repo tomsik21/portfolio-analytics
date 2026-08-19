@@ -70,6 +70,12 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+          # These two feed frontend/currents.config.ts, which uploads
+          # this run's results to the Currents.dev dashboard alongside
+          # the local HTML report. CURRENTS_PROJECT_ID is a repo
+          # variable (not sensitive); CURRENTS_RECORD_KEY is a secret.
+          CURRENTS_PROJECT_ID: ${{ vars.CURRENTS_PROJECT_ID }}
+          CURRENTS_RECORD_KEY: ${{ secrets.CURRENTS_RECORD_KEY }}
 
       - name: Upload Playwright report on failure
         if: failure()

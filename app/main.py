@@ -53,7 +53,14 @@ def _get_con():
     # patch is only visible here because we look it up on the module at
     # call time rather than binding our own copy of the function at
     # import time (which would silently keep pointing at the original).
-    return db.get_connection()
+    #
+    # read_only=True matters under real concurrent traffic (e.g. several
+    # Playwright tests hitting the API at once): every endpoint here only
+    # queries, never writes, and DuckDB only allows one read-write
+    # connection to a file at a time — concurrent read-write connects
+    # raise "Unique file handle conflict". Concurrent read-only connects
+    # don't have that restriction. See db.get_connection()'s docstring.
+    return db.get_connection(read_only=True)
 
 
 @app.get("/health")
