@@ -84,3 +84,50 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 7
+
+      # Runs even if tests failed (always()) so the public dashboard
+      # still reflects a failing run rather than silently going stale.
+      # Only builds data (doesn't publish) here — publishing happens in
+      # the dedicated job below, gated to pushes on main only, so PR
+      # branches never overwrite the live public dashboard.
+      - name: Build dashboard data
+        if: always()
+        working-directory: frontend
+        run: node scripts/build-dashboard.mjs
+
+      - name: Upload dashboard site artifact
+        if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-site
+          path: docs/
+
+  publish-dashboard:
+    name: Publish test dashboard (GitHub Pages)
+    needs: e2e-tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download dashboard site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-site
+          path: docs
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
