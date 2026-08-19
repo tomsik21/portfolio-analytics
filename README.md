@@ -121,6 +121,22 @@ recalculation when filters change, the attribution reconciliation
 invariant re-verified from rendered page text (not just the API
 response), and error states for missing/invalid data.
 
+## Test dashboard and monitoring
+
+Every CI run uploads Playwright results to a [Currents.dev](https://currents.dev)
+dashboard — pass/fail history over time (not just the latest run),
+flaky-test detection, and recorded traces/videos/screenshots for every
+test, not just failures. This is what turns "the tests are green right
+now" into something with actual history and trends behind it.
+
+`frontend/currents.config.ts` holds the (non-secret) project ID;
+`CURRENTS_RECORD_KEY` is a GitHub Actions secret, never committed. To
+also upload local runs, export it yourself before running tests:
+```bash
+export CURRENTS_RECORD_KEY=...   # from your Currents.dev org settings
+```
+
+
 ## Project structure
 
 ```text

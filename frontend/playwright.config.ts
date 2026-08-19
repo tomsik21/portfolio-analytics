@@ -18,11 +18,19 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   retries: 0,
-  reporter: "html",
+  // "html" keeps the local report working exactly as before; adding the
+  // Currents reporter alongside it uploads the same run's results to
+  // your Currents.dev dashboard. Neither reporter replaces the other —
+  // this is additive, not a swap.
+  reporter: [["html"], ["@currents/playwright"]],
   use: {
     baseURL: "http://localhost:5173",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
+    // Currents' dashboard is only genuinely useful once there's
+    // something to look at for every run, not just failures — "on"
+    // records a trace/video/screenshot for every test, pass or fail.
+    trace: "on",
+    video: "on",
+    screenshot: "on",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
