@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Test Dashboard — portfolio-analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  body {
+    margin: 0;
+    background: #f5f6f8;
+    color: #1a1a2e;
+  }
+  .shell {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  header {
+    margin-bottom: 24px;
+  }
+  header h1 {
+    font-size: 22px;
+    margin: 0 0 4px 0;
+  }
+  header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+  }
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+  .card h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+    margin: 0 0 16px 0;
+  }
+  .metric-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .metric {
+    min-width: 110px;
+  }
+  .metric .value {
+    font-size: 26px;
+    font-weight: 600;
+  }
+  .metric .value.pass { color: #0a7d3e; }
+  .metric .value.fail { color: #c22b2b; }
+  .metric .value.flaky { color: #b8860b; }
+  .metric .label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .charts-row {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 700px) {
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  th {
+    color: #888;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.expected { background: #e3f6ea; color: #0a7d3e; }
+  .badge.unexpected { background: #fdecea; color: #a11616; }
+  .badge.flaky { background: #fff4e0; color: #8a6100; }
+  .badge.skipped { background: #eee; color: #666; }
+  .spec-name {
+    font-weight: 600;
+    margin-top: 18px;
+    margin-bottom: 6px;
+  }
+  .spec-name:first-child { margin-top: 0; }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+  }
+  .stale-banner {
+    background: #fff4e0;
+    color: #8a6100;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>portfolio-analytics — Test Dashboard</h1>
+    <p>Playwright end-to-end test results, published automatically from CI on every run against <code>main</code>.</p>
+  </header>
+
+  <div id="stale-banner"></div>
+  <div id="content">
+    <div class="empty-state">Loading…</div>
+  </div>
+</div>
+
+<script>
+async function render() {
+  const content = document.getElementById("content");
+  const staleBanner = document.getElementById("stale-banner");
+
+  let data;
+  try {
+    const res = await fetch("./dashboard-data.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("not found");
+    data = await res.json();
+  } catch (e) {
+    content.innerHTML = `<div class="empty-state">
+      No test data published yet. This page fills in automatically after the
+      next CI run on <code>main</code>.
+    </div>`;
+    return;
+  }
+
+  const generated = new Date(data.generatedAt);
+  const ageHours = (Date.now() - generated.getTime()) / 36e5;
+  if (ageHours > 24 * 7) {
+    staleBanner.innerHTML = `<div class="stale-banner">
+      This data is from ${generated.toLocaleDateString()} — over a week old.
+      It updates automatically on the next push to main.
+    </div>`;
+  }
+
+  const { stats, specs } = data;
+  const passRate = stats.total > 0 ? ((stats.passed / stats.total) * 100).toFixed(0) : "—";
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Latest Run</h2>
+      <div class="metric-row">
+        <div class="metric">
+          <div class="value">${passRate}%</div>
+          <div class="label">Pass rate</div>
+        </div>
+        <div class="metric">
+          <div class="value pass">${stats.passed}</div>
+          <div class="label">Passed</div>
+        </div>
+        <div class="metric">
+          <div class="value fail">${stats.failed}</div>
+          <div class="label">Failed</div>
+        </div>
+        <div class="metric">
+          <div class="value flaky">${stats.flaky}</div>
+          <div class="label">Flaky</div>
+        </div>
+        <div class="metric">
+          <div class="value">${(stats.durationMs / 1000).toFixed(1)}s</div>
+          <div class="label">Total duration</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#888;margin:14px 0 0 0;">
+        Generated ${generated.toLocaleString()}
+      </p>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <h2>Pass / Fail / Flaky</h2>
+        <canvas id="donutChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Duration per test (ms)</h2>
+        <canvas id="durationChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>All Tests</h2>
+      ${specs.map(spec => `
+        <div class="spec-name">${spec.specFile}</div>
+        <table>
+          <thead><tr><th>Test</th><th>Status</th><th>Duration</th><th>Retries</th></tr></thead>
+          <tbody>
+            ${spec.tests.map(t => `
+              <tr>
+                <td>${t.title}</td>
+                <td><span class="badge ${t.status}">${t.status}</span></td>
+                <td>${t.durationMs}ms</td>
+                <td>${t.retries}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `).join("")}
+    </div>
+  `;
+
+  const allTests = specs.flatMap(s => s.tests);
+
+  new Chart(document.getElementById("donutChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["Passed", "Failed", "Flaky", "Skipped"],
+      datasets: [{
+        data: [stats.passed, stats.failed, stats.flaky, stats.skipped],
+        backgroundColor: ["#0a7d3e", "#c22b2b", "#d99b0a", "#bbb"],
+      }],
+    },
+    options: { plugins: { legend: { position: "bottom" } } },
+  });
+
+  new Chart(document.getElementById("durationChart"), {
+    type: "bar",
+    data: {
+      labels: allTests.map(t => t.title.length > 30 ? t.title.slice(0, 30) + "…" : t.title),
+      datasets: [{
+        label: "Duration (ms)",
+        data: allTests.map(t => t.durationMs),
+        backgroundColor: allTests.map(t =>
+          t.status === "unexpected" ? "#c22b2b" :
+          t.status === "flaky" ? "#d99b0a" : "#4a6fd4"
+        ),
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+    },
+  });
+}
+
+render();
+</script>
+</body>
+</html>

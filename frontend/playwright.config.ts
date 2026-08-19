@@ -7,7 +7,14 @@ import { currentsReporter } from "@currents/playwright";
 // the reporter list conditionally lets local runs work fine without it
 // (falls back to just the local HTML report), while CI — which always
 // has the key — still uploads to the Currents.dev dashboard.
-const reporters: ReporterDescription[] = [["html"]];
+const reporters: ReporterDescription[] = [
+  ["html"],
+  // Structured JSON output — a small script (scripts/build-dashboard.mjs)
+  // turns this into the data behind the public static dashboard published
+  // to GitHub Pages. Unlike Currents, that dashboard needs no login, no
+  // trial, and never expires — see docs/ for the actual page.
+  ["json", { outputFile: "test-results.json" }],
+];
 if (process.env.CURRENTS_RECORD_KEY) {
   reporters.push(currentsReporter());
 }

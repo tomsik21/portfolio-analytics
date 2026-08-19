@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-08-19T04:43:45.432Z",
+  "stats": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "flaky": 0,
+    "skipped": 0,
+    "durationMs": 14507.4
+  },
+  "specs": [
+    {
+      "specFile": "attribution.spec.ts",
+      "tests": [
+        {
+          "specFile": "attribution.spec.ts",
+          "title": "renders all three seeded sectors with correct values",
+          "status": "expected",
+          "durationMs": 4490,
+          "retries": 0
+        },
+        {
+          "specFile": "attribution.spec.ts",
+          "title": "active return equals portfolio minus benchmark return",
+          "status": "expected",
+          "durationMs": 1130,
+          "retries": 0
+        },
+        {
+          "specFile": "attribution.spec.ts",
+          "title": "reconciliation delta is displayed and effectively zero",
+          "status": "expected",
+          "durationMs": 1122,
+          "retries": 0
+        },
+        {
+          "specFile": "attribution.spec.ts",
+          "title": "changing the attribution date range to one with no data shows a clear error",
+          "status": "expected",
+          "durationMs": 955,
+          "retries": 0
+        }
+      ]
+    },
+    {
+      "specFile": "dashboard.spec.ts",
+      "tests": [
+        {
+          "specFile": "dashboard.spec.ts",
+          "title": "loads and connects to the backend",
+          "status": "expected",
+          "durationMs": 1963,
+          "retries": 0
+        },
+        {
+          "specFile": "dashboard.spec.ts",
+          "title": "all three data panels render real values, not stuck loading",
+          "status": "expected",
+          "durationMs": 2207,
+          "retries": 0
+        }
+      ]
+    },
+    {
+      "specFile": "pnl.spec.ts",
+      "tests": [
+        {
+          "specFile": "pnl.spec.ts",
+          "title": "shows correct FIFO-matched realized and unrealized P&L",
+          "status": "expected",
+          "durationMs": 4448,
+          "retries": 0
+        },
+        {
+          "specFile": "pnl.spec.ts",
+          "title": "shows a clear error for a security with no transactions",
+          "status": "expected",
+          "durationMs": 1264,
+          "retries": 0
+        }
+      ]
+    },
+    {
+      "specFile": "twr.spec.ts",
+      "tests": [
+        {
+          "specFile": "twr.spec.ts",
+          "title": "shows the correct default TWR for the seeded portfolio",
+          "status": "expected",
+          "durationMs": 4484,
+          "retries": 0
+        },
+        {
+          "specFile": "twr.spec.ts",
+          "title": "recalculates live when the date range changes",
+          "status": "expected",
+          "durationMs": 1188,
+          "retries": 0
+        },
+        {
+          "specFile": "twr.spec.ts",
+          "title": "shows a clear error for an unknown portfolio rather than a blank panel",
+          "status": "expected",
+          "durationMs": 1153,
+          "retries": 0
+        }
+      ]
+    }
+  ]
+}

@@ -29,3 +29,4 @@ frontend/playwright/.cache/
 # Editors
 .vscode/
 .idea/
+frontend/test-results.json
